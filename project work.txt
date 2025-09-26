@@ -1,0 +1,99 @@
+import java.util.*;
+
+public class Main {
+    // normalized job DB: keys are normalized (lowercase, non-alnum removed)
+    private static final Map<String, List<String>> JOB_DB = new HashMap<>();
+
+    static {
+        JOB_DB.put(normalize("Python"), Arrays.asList("Python Developer", "Data Analyst"));
+        JOB_DB.put(normalize("Java"), Arrays.asList("Java Developer", "Backend Developer"));
+        JOB_DB.put(normalize("SQL"), Arrays.asList("Database Administrator", "Data Analyst"));
+        JOB_DB.put(normalize("Communication"), Arrays.asList("Customer Support", "Project Coordinator"));
+        JOB_DB.put(normalize("Teamwork"), Arrays.asList("Project Manager", "Software Team Lead"));
+        JOB_DB.put(normalize("Problem-solving"), Arrays.asList("Software Engineer", "Data Scientist"));
+        JOB_DB.put(normalize("Creativity"), Arrays.asList("UI/UX Designer", "Product Designer"));
+        JOB_DB.put(normalize("Adaptability"), Arrays.asList("Consultant", "Business Analyst"));
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter your name: ");
+        String name = sc.nextLine().trim();
+        if (name.isEmpty()) name = "User";
+
+        System.out.print("Enter your age: ");
+        String ageLine = sc.nextLine().trim();
+        int age = -1;
+        if (!ageLine.isEmpty()) {
+            try {
+                age = Integer.parseInt(ageLine);
+            } catch (NumberFormatException e) {
+                System.out.println("Note: age not a valid integer — storing as unknown.");
+            }
+        }
+
+        System.out.print("Enter your qualifications (comma separated): ");
+        String qualificationsInput = sc.nextLine();
+        List<String> qualifications = splitAndClean(qualificationsInput);
+
+        System.out.print("Enter your technical skills (comma separated): ");
+        String skillsInput = sc.nextLine();
+        List<String> technicalSkills = splitAndClean(skillsInput);
+
+        System.out.print("Enter your strengths (comma separated, max 3): ");
+        String strengthsInput = sc.nextLine();
+        List<String> strengths = splitAndClean(strengthsInput);
+        if (strengths.size() > 3) {
+            System.out.println("Note: Only the first 3 strengths will be considered.");
+            strengths = strengths.subList(0, 3);
+        }
+
+        // Collect recommendations (preserve insertion order)
+        Set<String> recommendedJobs = new LinkedHashSet<>();
+        for (String skill : technicalSkills) {
+            List<String> jobs = JOB_DB.get(normalize(skill));
+            if (jobs != null) recommendedJobs.addAll(jobs);
+        }
+        for (String strength : strengths) {
+            List<String> jobs = JOB_DB.get(normalize(strength));
+            if (jobs != null) recommendedJobs.addAll(jobs);
+        }
+
+        // Output
+        System.out.println();
+        System.out.println("Hello " + name + (age >= 0 ? " (Age: " + age + ")" : " (Age: unknown)"));
+        System.out.println("Qualifications: " + qualifications);
+        System.out.println("Technical Skills: " + technicalSkills);
+        System.out.println("Strengths: " + strengths);
+
+        if (recommendedJobs.isEmpty()) {
+            System.out.println("\nNo matching jobs found in the database.");
+        } else {
+            System.out.println("\nBased on your profile, recommended jobs:");
+            for (String job : recommendedJobs) {
+                System.out.println(" - " + job);
+            }
+        }
+
+        sc.close();
+    }
+
+    // helper: split comma-separated input, trim and drop empty pieces
+    private static List<String> splitAndClean(String input) {
+        List<String> out = new ArrayList<>();
+        if (input == null || input.trim().isEmpty()) return out;
+        String[] parts = input.split(",");
+        for (String p : parts) {
+            String t = p.trim();
+            if (!t.isEmpty()) out.add(t);
+        }
+        return out;
+    }
+
+    // helper: normalization used for matching keys (lowercase + remove non-alnum)
+    private static String normalize(String s) {
+        if (s == null) return "";
+        return s.toLowerCase().replaceAll("[^a-z0-9]", "");
+    }
+}
